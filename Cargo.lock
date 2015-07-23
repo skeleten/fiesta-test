@@ -3,9 +3,10 @@ name = "fiesta-tests"
 version = "0.1.0"
 dependencies = [
  "chan 0.1.14 (registry+https://github.com/rust-lang/crates.io-index)",
- "fiesta-net 0.1.0 (git+https://github.com/skeleten/fiesta-net)",
+ "fiesta-net 0.1.0",
  "log 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "mio 0.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "rand 0.3.8 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -37,7 +38,6 @@ dependencies = [
 [[package]]
 name = "fiesta-net"
 version = "0.1.0"
-source = "git+https://github.com/skeleten/fiesta-net#de0b66e494bc51a3af540e96eeadde18f40243f3"
 dependencies = [
  "chan 0.1.14 (registry+https://github.com/rust-lang/crates.io-index)",
  "log 0.3.1 (registry+https://github.com/rust-lang/crates.io-index)",

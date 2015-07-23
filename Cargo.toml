@@ -4,8 +4,9 @@ version = "0.1.0"
 authors = ["skeleten"]
 
 [dependencies]
-fiesta-net = { git = "https://github.com/skeleten/fiesta-net"}
+fiesta-net = { path = "../fiesta-net" }
 
 mio = "0.4"
 log = "0.3"
 chan = "0.1"
+rand = "0.3"

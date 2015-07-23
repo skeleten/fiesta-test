@@ -2,28 +2,64 @@
 extern crate log;
 extern crate mio;
 extern crate fiesta_net;
+extern crate rand;
 
+use std::sync::{Arc, RwLock};
+use std::io::Write;
 use mio::*;
-
 use fiesta_net::*;
+use rand::Rng;
 
 mod logger;
 
-struct SampleHandler;
+struct SampleHandler {
+	packets_processed:		Arc<RwLock<usize>>,
+}
+
+impl SampleHandler {
+	pub fn new() -> SampleHandler {
+		let arc = Arc::new(RwLock::new(0));
+		let handler = SampleHandler {
+			packets_processed:		arc.clone(),
+		};
+		std::thread::spawn(move || {
+			let mut last = 0;
+			let mut rate = 0;
+			let mut max_rate = 0;
+			loop {
+				std::thread::sleep_ms(1000);
+				{
+					let guard = arc.read().unwrap();
+					{
+						rate = ((*guard) - last);
+						last = *guard;
+					};
+					if rate > max_rate {
+						max_rate = rate;
+					};
+					print!("processed {:10} packets! rate: {:10} max: {:10}\r", *guard, rate, max_rate);
+					std::io::stdout().flush();
+				}
+			}
+		});
+
+		handler
+	}
+}
 
 impl PacketProcessor for SampleHandler {
-	fn process_packet(&mut self, info: Box<PacketProcessingInfo>) {
-		let client = info.client.borrow();
-
-		info!(target: "handling", "packet with header {:04X} in thread '{}' (client {:?} alive: {})", 
-			info.packet.header,
-			std::thread::current().name().unwrap(),
-			client.id(),
-			client.alive());
+	fn process_packet(&mut self, info: Arc<RwLock<Box<PacketProcessingInfo>>>) {
+		let mut rng = rand::thread_rng();
+		let sleepms = rng.gen_range(100, 1000);
+		// std::thread::sleep_ms(sleepms);
+		let mut guard = self.packets_processed.write().unwrap();
+		*guard = (*guard) + 1;
 	}
 
 	fn clone(&self) -> Box<PacketProcessor> {
-		Box::new(SampleHandler)
+		Box::new(SampleHandler {
+			packets_processed: 		self.packets_processed.clone(),
+		})
 	}
 }
 
@@ -40,8 +76,8 @@ fn main() {
 
     let mut event_loop = EventLoop::new().unwrap();
 
-    let handler = Box::new(SampleHandler);
-    let mult_handler = PacketProcessingThreadPool::new(5, handler);
+    let handler = Box::new(SampleHandler::new());
+    let mult_handler = PacketProcessingThreadPool::new(20, handler);
 
     event_loop.register(&socket, fiesta_net::SERVER_TOKEN).unwrap();
     let mut handler = fiesta_net::FiestaHandler::new(socket, Box::new(mult_handler));
